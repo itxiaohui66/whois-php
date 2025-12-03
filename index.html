@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://blogoss.itxiaohui.top/logo%20-uhlgnmrf.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://blogoss.itxiaohui.top/logo%20-uhlgnmrf.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js"></script>
+  <title>WHOIS 域名查询与网络诊断工具</title>
+  <style>
+    /* 设置整体样式 */
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    /* 主容器样式 */
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      background-color: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      padding: 30px;
+      margin-bottom: 20px;
+    }
+
+    /* 标题样式 */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .header h1 {
+      color: #2c3e50;
+      margin: 0 0 10px;
+      font-size: 28px;
+      font-weight: 600;
+    }
+    
+    .header p {
+      color: #7f8c8d;
+      margin: 0;
+      font-size: 16px;
+    }
+
+    /* 设置搜索框样式 */
+    .search-box {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    .search-container {
+      display: flex;
+      max-width: 600px;
+      margin: 0 auto;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border-radius: 50px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .search-container:focus-within {
+      box-shadow: 0 6px 16px rgba(0, 123, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    input[type="text"] {
+      flex-grow: 1;
+      padding: 16px 20px;
+      border: none;
+      background: #f8f9fa;
+      font-size: 16px;
+      outline: none;
+    }
+
+    button {
+      padding: 16px 30px;
+      border: none;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    button:hover {
+      opacity: 0.9;
+    }
+    
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .query-btn {
+      background: linear-gradient(to right, #3498db, #2980b9);
+    }
+    
+    .ping-btn {
+      background: linear-gradient(to right, #27ae60, #219653);
+    }
+    
+    .dns-btn {
+      background: linear-gradient(to right, #e74c3c, #c0392b);
+    }
+
+    /* 按钮容器 */
+    .button-container {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    /* 设置查询结果样式 */
+    .query-results {
+      width: 100%;
+    }
+
+    /* 设置表格样式 */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    th,
+    td {
+      padding: 16px 20px;
+      border-bottom: 1px solid #eef1f5;
+    }
+
+    th {
+      background-color: #f8fafc;
+      text-align: left;
+      font-weight: 600;
+      color: #2c3e50;
+      width: 30%;
+    }
+    
+    td {
+      color: #34495e;
+      word-break: break-word;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr.DomainStatus td {
+      color: #e74c3c;
+      font-weight: 500;
+    }
+
+    tr.DNSSEC td {
+      color: #27ae60;
+      font-weight: 500;
+    }
+
+    caption {
+      font-size: 14px;
+      color: #7f8c8d;
+      padding: 15px 0;
+      caption-side: top;
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* 加载动画样式 */
+    .loader {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3498db;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 30px auto;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* 隐藏加载动画 */
+    .hidden {
+      display: none;
+    }
+    
+    /* 错误消息样式 */
+    .error-message {
+      background-color: #ffeaea;
+      color: #d63031;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      text-align: center;
+      border-left: 4px solid #d63031;
+    }
+    
+    /* 成功消息样式 */
+    .success-message {
+      background-color: #e8f6ef;
+      color: #27ae60;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      text-align: center;
+      border-left: 4px solid #27ae60;
+    }
+    
+    /* DNS记录表格样式 */
+    .dns-table {
+      margin-top: 20px;
+    }
+    
+    .dns-table th {
+      width: 20%;
+    }
+    
+    /* Ping结果样式 */
+    .ping-results {
+      background-color: #f8fafc;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+    
+    .ping-stats {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+    
+    .ping-stat {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      flex: 1;
+      margin: 0 10px;
+      min-width: 150px;
+      text-align: center;
+    }
+    
+    .ping-stat h4 {
+      margin: 0 0 10px;
+      color: #2c3e50;
+      font-size: 14px;
+    }
+    
+    .ping-stat p {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #3498db;
+    }
+    
+    .ping-output {
+      background: #2c3e50;
+      color: #ecf0f1;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    /* WHOIS原始信息样式 */
+    .whois-raw {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+    }
+    
+    .whois-raw pre {
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      margin: 0;
+      max-height: 400px;
+      overflow-y: auto;
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    /* 分组标题样式 */
+    .section-title {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px 20px;
+      margin: 25px 0 15px 0;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+      }
+      
+      .search-container {
+        flex-direction: column;
+        border-radius: 12px;
+      }
+      
+      input[type="text"] {
+        border-radius: 12px 12px 0 0;
+      }
+      
+      button {
+        border-radius: 0;
+      }
+      
+      .button-container {
+        flex-direction: column;
+      }
+      
+      .button-container button {
+        border-radius: 0;
+      }
+      
+      .button-container button:first-child {
+        border-radius: 0 0 0 12px;
+      }
+      
+      .button-container button:last-child {
+        border-radius: 0 0 12px 0;
+      }
+      
+      th, td {
+        padding: 12px 15px;
+      }
+      
+      th {
+        width: 40%;
+      }
+      
+      .ping-stats {
+        flex-direction: column;
+      }
+      
+      .ping-stat {
+        margin: 5px 0;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 24px;
+      }
+      
+      th, td {
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+    }
+
+    /* 页脚样式 */
+    footer {
+      text-align: center;
+      color: #7f8c8d;
+      font-size: 14px;
+      margin-top: 20px;
+    }
+
+    /* 信息提示样式 */
+    .info-tip {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 12px 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>WHOIS 域名查询与网络诊断工具</h1>
+      <p>查询域名的注册信息、DNS记录，并进行网络连通性测试</p>
+    </div>
+    
+    <div class="search-box">
+      <div class="search-container">
+        <input type="text" id="input" name="domain" placeholder="输入域名或IP地址 (例如: example.com 或 8.8.8.8)" />
+        <input type="button" id="query" class="query-btn" value="WHOIS查询" />
+      </div>
+      <div class="button-container">
+        <button type="button" id="dns-query" class="dns-btn">DNS记录查询</button>
+        <button type="button" id="ping-test" class="ping-btn">Ping测试</button>
+      </div>
+    </div>
+    
+    <div id="loader" class="loader hidden"></div>
+    <div id="error-message" class="error-message hidden"></div>
+    <div id="success-message" class="success-message hidden"></div>
+    <div id="put" class="query-results"></div>
+  </div>
+  <footer>
+    <p>粤ICP备2025420701号-4</p>
+  </footer>
+
+  <script>
+    $(document).ready(function () {
+      // 显示错误消息
+      function showError(message) {
+        $('#error-message').text(message).removeClass('hidden');
+        $('#success-message').addClass('hidden');
+        setTimeout(function() {
+          $('#error-message').addClass('hidden');
+        }, 5000);
+      }
+      
+      // 显示成功消息
+      function showSuccess(message) {
+        $('#success-message').text(message).removeClass('hidden');
+        $('#error-message').addClass('hidden');
+        setTimeout(function() {
+          $('#success-message').addClass('hidden');
+        }, 5000);
+      }
+      
+      // 验证域名格式
+      function validateDomain(domain) {
+        if (!domain) {
+          showError('请输入要查询的域名或IP地址');
+          return false;
+        }
+        
+        // 域名验证正则表达式
+        const domainRegex = /^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+        // IP地址验证正则表达式
+        const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+        
+        if (!domainRegex.test(domain) && !ipRegex.test(domain)) {
+          showError('请输入有效的域名或IP地址格式 (例如: example.com 或 8.8.8.8)');
+          return false;
+        }
+        
+        return true;
+      }
+      
+      // 提取域名
+      function extractDomain(input) {
+        // 移除协议和路径
+        let domain = input.replace(/^https?:\/\//, '');
+        domain = domain.split('/')[0];
+        
+        // 移除端口号
+        domain = domain.split(':')[0];
+        
+        // 移除www前缀
+        domain = domain.replace(/^www\./, '');
+        
+        return domain;
+      }
+
+      // WHOIS查询
+      function performWhoisQuery() {
+        let getDomain = $('#input').val().trim();
+        
+        if (!getDomain) {
+          showError('请输入要查询的域名');
+          return;
+        }
+        
+        // 提取域名
+        getDomain = extractDomain(getDomain);
+        
+        // 验证域名
+        if (!validateDomain(getDomain)) {
+          return;
+        }
+        
+        $('#input').val(getDomain);
+        $('#loader').removeClass('hidden');
+        $('#error-message').addClass('hidden');
+        $('#success-message').addClass('hidden');
+        $('#put').empty();
+        
+        var datas = {
+          domain: getDomain,
+          type: 'whois'
+        };
+
+        $.ajax({
+          url: "whois_fixed.php",
+          type: "post",
+          data: datas,
+          timeout: 20000, // 20秒超时
+          success: function (result) {
+            try {
+              // 尝试解析 JSON
+              if (typeof result === 'string') {
+                result = JSON.parse(result);
+              }
+              
+              if (result.error) {
+                showError(result.error);
+                return;
+              }
+              
+              if (result.result !== "200" && result.result != null) {
+                showError(result.result);
+                return;
+              }
+              
+              whoisPrint(result);
+              showSuccess('WHOIS查询完成');
+            } catch (e) {
+              console.error('解析错误:', e, '原始响应:', result);
+              showError('解析服务器响应时出错: ' + e.message);
+            }
+          },
+          error: function(xhr, status, error) {
+            if (status === 'timeout') {
+              showError('查询超时，请稍后重试');
+            } else {
+              showError('查询失败: ' + error);
+            }
+          },
+          complete: function () {
+            $('#loader').addClass('hidden');
+          }
+        });
+      }
+
+      // DNS记录查询
+      function performDnsQuery() {
+        let getDomain = $('#input').val().trim();
+        
+        if (!getDomain) {
+          showError('请输入要查询的域名');
+          return;
+        }
+        
+        // 提取域名
+        getDomain = extractDomain(getDomain);
+        
+        // 验证域名
+        if (!validateDomain(getDomain)) {
+          return;
+        }
+        
+        $('#input').val(getDomain);
+        $('#loader').removeClass('hidden');
+        $('#error-message').addClass('hidden');
+        $('#success-message').addClass('hidden');
+        $('#put').empty();
+        
+        var datas = {
+          domain: getDomain,
+          type: 'dns'
+        };
+
+        $.ajax({
+          url: "whois_fixed.php",
+          type: "post",
+          data: datas,
+          timeout: 15000, // 15秒超时
+          success: function (result) {
+            try {
+              // 尝试解析 JSON
+              if (typeof result === 'string') {
+                result = JSON.parse(result);
+              }
+              
+              if (result.error) {
+                showError(result.error);
+                return;
+              }
+              
+              dnsPrint(result);
+              showSuccess('DNS记录查询完成');
+            } catch (e) {
+              console.error('解析错误:', e, '原始响应:', result);
+              showError('解析服务器响应时出错: ' + e.message);
+            }
+          },
+          error: function(xhr, status, error) {
+            if (status === 'timeout') {
+              showError('查询超时，请稍后重试');
+            } else {
+              showError('查询失败: ' + error);
+            }
+          },
+          complete: function () {
+            $('#loader').addClass('hidden');
+          }
+        });
+      }
+
+      // Ping测试
+      function performPingTest() {
+        let getDomain = $('#input').val().trim();
+        
+        if (!getDomain) {
+          showError('请输入要测试的域名或IP地址');
+          return;
+        }
+        
+        // 提取域名
+        getDomain = extractDomain(getDomain);
+        
+        // 验证域名
+        if (!validateDomain(getDomain)) {
+          return;
+        }
+        
+        $('#input').val(getDomain);
+        $('#loader').removeClass('hidden');
+        $('#error-message').addClass('hidden');
+        $('#success-message').addClass('hidden');
+        $('#put').empty();
+        
+        var datas = {
+          domain: getDomain,
+          type: 'ping'
+        };
+
+        $.ajax({
+          url: "whois_fixed.php",
+          type: "post",
+          data: datas,
+          timeout: 20000, // 20秒超时
+          success: function (result) {
+            try {
+              // 尝试解析 JSON
+              if (typeof result === 'string') {
+                result = JSON.parse(result);
+              }
+              
+              if (result.error) {
+                showError(result.error);
+                return;
+              }
+              
+              pingPrint(result);
+              showSuccess('Ping测试完成');
+            } catch (e) {
+              console.error('解析错误:', e, '原始响应:', result);
+              showError('解析服务器响应时出错: ' + e.message);
+            }
+          },
+          error: function(xhr, status, error) {
+            if (status === 'timeout') {
+              showError('查询超时，请稍后重试');
+            } else {
+              showError('查询失败: ' + error);
+            }
+          },
+          complete: function () {
+            $('#loader').addClass('hidden');
+          }
+        });
+      }
+
+      function bindEventListeners() {
+        $("#query").click(function () {
+          performWhoisQuery();
+        });
+
+        $("#dns-query").click(function () {
+          performDnsQuery();
+        });
+
+        $("#ping-test").click(function () {
+          performPingTest();
+        });
+
+        $("#input").keypress(function (event) {
+          if (event.which === 13) {
+            event.preventDefault();
+            performWhoisQuery();
+          }
+        });
+      }
+
+      function whoisPrint(result) {
+        const getName = {
+          // 域名基本信息
+          "domain": "域名",
+          "domainCode": "域名代码",
+          "DomainName": "域名名称",
+          "DomainID": "域名ID",
+          "WHOISServer": "WHOIS服务器",
+          
+          // 日期信息
+          "CreationDate": "创建日期",
+          "ExpiryDate": "到期时间",
+          "UpdatedDate": "更新时间",
+          
+          // 注册商信息
+          "SponsoringRegistrar": "注册商",
+          "RegistrarURL": "注册商网址",
+          "RegistrarID": "注册商ID",
+          "RegistrarEmail": "注册商联系邮箱",
+          "RegistrarPhone": "注册商联系电话",
+          
+          // 注册人信息
+          "Registrant": "注册人",
+          "RegistrantOrganization": "注册人组织",
+          "RegistrantStreet": "注册人街道",
+          "RegistrantCity": "注册人城市",
+          "RegistrantState": "注册人州/省",
+          "RegistrantPostalCode": "注册人邮编",
+          "RegistrantCountry": "注册人国家",
+          "RegistrantPhone": "注册人电话",
+          "RegistrantEmail": "注册人邮箱",
+          
+          // 管理联系人
+          "Admin": "管理联系人",
+          "AdminOrganization": "管理联系人组织",
+          "AdminStreet": "管理联系人街道",
+          "AdminCity": "管理联系人城市",
+          "AdminState": "管理联系人州/省",
+          "AdminPostalCode": "管理联系人邮编",
+          "AdminCountry": "管理联系人国家",
+          "AdminPhone": "管理联系人电话",
+          "AdminEmail": "管理联系人邮箱",
+          
+          // 技术联系人
+          "Tech": "技术联系人",
+          "TechOrganization": "技术联系人组织",
+          "TechStreet": "技术联系人街道",
+          "TechCity": "技术联系人城市",
+          "TechState": "技术联系人州/省",
+          "TechPostalCode": "技术联系人邮编",
+          "TechCountry": "技术联系人国家",
+          "TechPhone": "技术联系人电话",
+          "TechEmail": "技术联系人邮箱",
+          
+          // 状态信息
+          "DomainStatus": "域名状态",
+          "DNS": "DNS服务器",
+          "DNSSEC": "DNSSEC",
+          
+          "unregistered": "未注册"
+        };
+
+        const infoContainer = document.getElementById('put');
+        infoContainer.innerHTML = '';
+
+        // 创建主容器
+        const mainContainer = document.createElement('div');
+
+        // 基本信息部分
+        const basicInfoSection = createSection('基本信息');
+        const basicTable = createInfoTable(result.main, [
+          "domain", "domainCode", "DomainName", "DomainID", "WHOISServer"
+        ], getName);
+        basicInfoSection.appendChild(basicTable);
+        mainContainer.appendChild(basicInfoSection);
+
+        // 日期信息部分
+        const dateInfoSection = createSection('日期信息');
+        const dateTable = createInfoTable(result.main, [
+          "CreationDate", "ExpiryDate", "UpdatedDate"
+        ], getName);
+        dateInfoSection.appendChild(dateTable);
+        mainContainer.appendChild(dateInfoSection);
+
+        // 注册商信息部分
+        const registrarSection = createSection('注册商信息');
+        const registrarTable = createInfoTable(result.main, [
+          "SponsoringRegistrar", "RegistrarURL", "RegistrarID", "RegistrarEmail", "RegistrarPhone"
+        ], getName);
+        registrarSection.appendChild(registrarTable);
+        mainContainer.appendChild(registrarSection);
+
+        // 注册人信息部分
+        const registrantSection = createSection('注册人信息');
+        const registrantTable = createInfoTable(result.main, [
+          "Registrant", "RegistrantOrganization", "RegistrantStreet", "RegistrantCity", 
+          "RegistrantState", "RegistrantPostalCode", "RegistrantCountry", "RegistrantPhone", "RegistrantEmail"
+        ], getName);
+        registrantSection.appendChild(registrantTable);
+        mainContainer.appendChild(registrantSection);
+
+        // 管理联系人部分
+        const adminSection = createSection('管理联系人');
+        const adminTable = createInfoTable(result.main, [
+          "Admin", "AdminOrganization", "AdminStreet", "AdminCity", 
+          "AdminState", "AdminPostalCode", "AdminCountry", "AdminPhone", "AdminEmail"
+        ], getName);
+        adminSection.appendChild(adminTable);
+        mainContainer.appendChild(adminSection);
+
+        // 技术联系人部分
+        const techSection = createSection('技术联系人');
+        const techTable = createInfoTable(result.main, [
+          "Tech", "TechOrganization", "TechStreet", "TechCity", 
+          "TechState", "TechPostalCode", "TechCountry", "TechPhone", "TechEmail"
+        ], getName);
+        techSection.appendChild(techTable);
+        mainContainer.appendChild(techSection);
+
+        // 状态信息部分
+        const statusSection = createSection('状态信息');
+        const statusTable = createInfoTable(result.main, [
+          "DomainStatus", "DNS", "DNSSEC"
+        ], getName);
+        statusSection.appendChild(statusTable);
+        mainContainer.appendChild(statusSection);
+
+        // 添加原始WHOIS信息
+        if (result.whois) {
+          const rawSection = createSection('WHOIS原始信息');
+          const rawDiv = document.createElement('div');
+          rawDiv.className = 'whois-raw';
+          const pre = document.createElement('pre');
+          pre.textContent = result.whois.replace(/<br\s*\/?>/gi, '\n');
+          rawDiv.appendChild(pre);
+          rawSection.appendChild(rawDiv);
+          mainContainer.appendChild(rawSection);
+        }
+
+        infoContainer.appendChild(mainContainer);
+
+        // 隐藏重复的域名代码
+        if (result.main && result.main.domain === result.main.domainCode) {
+          const domainCodeRows = document.querySelectorAll(".domainCode");
+          domainCodeRows.forEach(row => {
+            if (row.style) row.style.display = "none";
+          });
+        }
+      }
+
+      // 创建信息表格
+      function createInfoTable(mainData, fields, nameMap) {
+        const table = document.createElement('table');
+        table.classList.add('info-table');
+
+        for (let i = 0; i < fields.length; i++) {
+          const key = fields[i];
+          if (!mainData || mainData[key] === "未找到" || mainData[key] == "" || mainData[key] === undefined)
+            continue;
+          
+          const name = nameMap[key] || key;
+
+          const row = document.createElement('tr');
+          row.classList.add(key);
+          
+          const labelCell = document.createElement('th');
+          labelCell.textContent = name;
+          row.appendChild(labelCell);
+
+          const valueCell = document.createElement('td');
+          valueCell.innerHTML = mainData[key];
+          row.appendChild(valueCell);
+
+          table.appendChild(row);
+        }
+
+        return table;
+      }
+
+      // 创建分组标题
+      function createSection(title) {
+        const section = document.createElement('div');
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'section-title';
+        titleDiv.textContent = title;
+        section.appendChild(titleDiv);
+        return section;
+      }
+
+      function dnsPrint(result) {
+        const infoContainer = document.getElementById('put');
+        infoContainer.innerHTML = '';
+        
+        if (!result.dns || result.dns.length === 0) {
+          infoContainer.innerHTML = '<div class="error-message">未找到DNS记录</div>';
+          return;
+        }
+        
+        const table = document.createElement('table');
+        table.classList.add('dns-table');
+        const caption = document.createElement('caption');
+        caption.innerHTML = "DNS记录查询结果";
+        table.appendChild(caption);
+        
+        // 表头
+        const headerRow = document.createElement('tr');
+        const headers = ['记录类型', '主机名', '值', 'TTL'];
+        
+        headers.forEach(headerText => {
+          const th = document.createElement('th');
+          th.textContent = headerText;
+          headerRow.appendChild(th);
+        });
+        
+        table.appendChild(headerRow);
+        
+        // 数据行
+        result.dns.forEach(record => {
+          const row = document.createElement('tr');
+          
+          const typeCell = document.createElement('td');
+          typeCell.textContent = record.type;
+          row.appendChild(typeCell);
+          
+          const nameCell = document.createElement('td');
+          nameCell.textContent = record.name;
+          row.appendChild(nameCell);
+          
+          const valueCell = document.createElement('td');
+          valueCell.textContent = record.value;
+          row.appendChild(valueCell);
+          
+          const ttlCell = document.createElement('td');
+          ttlCell.textContent = record.ttl || 'N/A';
+          row.appendChild(ttlCell);
+          
+          table.appendChild(row);
+        });
+        
+        infoContainer.appendChild(table);
+      }
+
+      function pingPrint(result) {
+        const infoContainer = document.getElementById('put');
+        infoContainer.innerHTML = '';
+        
+        const pingResults = document.createElement('div');
+        pingResults.className = 'ping-results';
+        
+        // Ping统计信息
+        if (result.ping_stats) {
+          const statsDiv = document.createElement('div');
+          statsDiv.className = 'ping-stats';
+          
+          const stats = [
+            { label: '发送数据包', value: result.ping_stats.packets_transmitted },
+            { label: '接收数据包', value: result.ping_stats.packets_received },
+            { label: '丢包率', value: result.ping_stats.packet_loss },
+            { label: '平均延迟', value: result.ping_stats.avg_rtt }
+          ];
+          
+          stats.forEach(stat => {
+            const statDiv = document.createElement('div');
+            statDiv.className = 'ping-stat';
+            
+            const label = document.createElement('h4');
+            label.textContent = stat.label;
+            
+            const value = document.createElement('p');
+            value.textContent = stat.value;
+            
+            statDiv.appendChild(label);
+            statDiv.appendChild(value);
+            statsDiv.appendChild(statDiv);
+          });
+          
+          pingResults.appendChild(statsDiv);
+        }
+        
+        // Ping输出
+        if (result.ping_output) {
+          const outputDiv = document.createElement('div');
+          outputDiv.className = 'ping-output';
+          outputDiv.textContent = result.ping_output;
+          
+          pingResults.appendChild(outputDiv);
+        } else {
+          const noOutput = document.createElement('div');
+          noOutput.className = 'error-message';
+          noOutput.textContent = '无输出结果';
+          pingResults.appendChild(noOutput);
+        }
+        
+        infoContainer.appendChild(pingResults);
+      }
+
+      bindEventListeners();
+    });
+  </script>
+</body>
+</html>

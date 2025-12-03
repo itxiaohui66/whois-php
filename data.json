@@ -1,0 +1,13 @@
+{
+    "CreationDate": ["Creation Date", "Created Date", "Registration Time", "Domain Registration Date"],
+    "ExpiryDate": ["Expiry Date", "Expiration Date", "Registry Expiry Date", "Expiration Time"],
+    "UpdatedDate": ["Updated Date", "Last Updated"],
+    "SponsoringRegistrar": ["Sponsoring Registrar", "Registrar"],
+    "RegistrarURL": ["Registrar URL"],
+    "Registrant": ["Registrant", "Registrant Name", "Registrant Organization"],
+    "DomainStatus": ["Domain Status", "Status"],
+    "DNS": ["Name Server", "nserver", "DNS"],
+    "DNSSEC": ["DNSSEC"],
+    "RegistrantContactEmail": ["Registrant Contact Email", "Registrant Email", "Admin Email"],
+    "unregistered": ["No match", "not found", "No entries found", "Status: free", "AVAILABLE", "Not Registered"]
+}
